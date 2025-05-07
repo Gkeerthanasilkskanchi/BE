@@ -1,74 +1,125 @@
-import { Request, Response } from "express";
-import nodemailer from "nodemailer";
-import dotenv from "dotenv";
+import Database from "better-sqlite3";
 
-dotenv.config(); // Load environment variables
+// Initialize SQLite DB
+const db = new Database("data.db");
 
-const sendQuery = async (request: Request, response: Response) => {
-    try {
+// Create user table if it doesn't exist
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE,
+    password TEXT
+  )
+`).run();
 
-        // Check if environment variables are properly set
-        if (!process.env.BE_EMAIL || !process.env.BE_PASSWORD) {
-            return response.status(500).json({ error: "Email credentials missing. Please check server logs." });
-        }
 
-        // Create transporter
-        const transporter = nodemailer.createTransport({
-            service: "Gmail",
-            auth: {
-                user: process.env.BE_EMAIL,
-                pass: process.env.BE_PASSWORD, // Ensure this is correct
-            },
-        });
+// Create products table
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      image TEXT,
+      title TEXT,
+      price REAL,
+      about TEXT,
+      cloth TEXT,
+      category TEXT,
+      bought_by TEXT,
+      saree_type TEXT
+    )
+  `).run();
+  
 
-        let mailOptions;
+  // Create liked_products table
+db.prepare(`
+    CREATE TABLE IF NOT EXISTS liked_products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      productId INTEGER NOT NULL,
+      UNIQUE(userId, productId)
+    )
+  `).run();
+  
+  // Create cart_products table
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS cart_products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      userId INTEGER NOT NULL,
+      productId INTEGER NOT NULL,
+      quantity INTEGER DEFAULT 1,
+      UNIQUE(userId, productId)
+    )
+  `).run();
+  
 
-        if (request?.body?.mobileNumber) {
-            // Sending a query email
-            mailOptions = {
-                from: process.env.BE_EMAIL,
-                to: process.env.BE_EMAIL, // Receiving email
-                subject: "Query About Course",
-                html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                  <h2 style="color:#a4204d;">You have a new query from the Learn-Tech website</h2>
-              
-                  <p style="font-size: 16px; color: #555;"><strong>Name :</strong> ${request?.body?.name}</p>
-                  <p style="font-size: 16px; color: #555;"><strong>Email ID :</strong> ${request.body?.email}</p>
-                  <p style="font-size: 16px; color: #555;"><strong>Mobile Number :</strong> ${request?.body?.mobileNumber}</p>
-                  <p style="font-size: 16px; color: #555;"><strong>Whatsapp Number :</strong> ${request?.body?.whatsappNumber}</p>
-                  <p style="font-size: 16px; color: #555;"><strong>Domain :</strong> ${request?.body?.domain || "<em>No Domain Mentioned</em>"}</p>
-                  <p style="font-size: 16px; color: #555;"><strong>Query :</strong> ${request?.body?.query || "<em>No Query Provided</em>"}</p>
-              
-                  <hr style="border: 1px solid #ddd; margin: 20px 0;"/>
-              
-              
-                </div>
-              `
-              
-            };
-        } else {
-            mailOptions = {
-                from: process.env.BE_EMAIL,
-                to: process.env.BE_EMAIL, // Receiving email
-                subject: "User Review",
-                text: `You have a new review from:
-                    Name: ${request?.body?.name}
-                    EmailId: ${request?.body?.email}
-                    Review: ${request?.body?.review || "No Review Provided"}`,
-            };
-        }
-
-        await transporter.sendMail(mailOptions);
-
-        return response.status(200).json({ message: "Email sent successfully!" });
-
-    } catch (error: any) {
-        
-        if (!response.headersSent) {
-            return response.status(500).json({ error: "Failed to send email. Check server logs for details." });
-        }
-    }
+// Create a new user
+export const createUser = (email: string, password: string) => {
+  const stmt = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)");
+  stmt.run(email, password);
 };
 
-export default { sendQuery };
+// Get user by email
+export const getUserByEmail = (email: string) => {
+  const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
+  return stmt.get(email);
+};
+
+// Add product
+export const addProduct = (
+    image: string,
+    title: string,
+    price: number,
+    about: string,
+    cloth: string,
+    category: string,
+    bought_by: string,
+    saree_type: string
+  ): void => {
+    const stmt = db.prepare(`
+      INSERT INTO products (image, title, price, about, cloth, category, bought_by, saree_type)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(image, title, price, about, cloth, category, bought_by, saree_type);
+  };
+  
+  // Get all products
+  export const getAllProducts = (): any[] => {
+    const stmt = db.prepare("SELECT * FROM products");
+    return stmt.all();
+  };
+  
+  // Like a product
+export const likeProduct = (userId: number, productId: number): void => {
+    const stmt = db.prepare(`INSERT OR IGNORE INTO liked_products (userId, productId) VALUES (?, ?)`);
+    stmt.run(userId, productId);
+  };
+  
+  // Get liked products for a user
+  export const getLikedProductsByUser = (userId: number): any[] => {
+    const stmt = db.prepare(`
+      SELECT p.* FROM products p
+      JOIN liked_products l ON p.id = l.productId
+      WHERE l.userId = ?
+    `);
+    return stmt.all(userId);
+  };
+  
+  // Add product to cart
+  export const addToCart = (userId: number, productId: number, quantity: number): void => {
+    const stmt = db.prepare(`
+      INSERT INTO cart_products (userId, productId, quantity)
+      VALUES (?, ?, ?)
+      ON CONFLICT(userId, productId) DO UPDATE SET quantity = quantity + excluded.quantity
+    `);
+    stmt.run(userId, productId, quantity);
+  };
+  
+  // Get cart items for a user
+  export const getCartByUser = (userId: number): any[] => {
+    const stmt = db.prepare(`
+      SELECT p.*, c.quantity FROM products p
+      JOIN cart_products c ON p.id = c.productId
+      WHERE c.userId = ?
+    `);
+    return stmt.all(userId);
+  };
+  

@@ -1,27 +1,24 @@
 import express from "express";
-import dotenv from 'dotenv';
-import { contactRouter } from "./router/contactRouter";
+import dotenv from "dotenv";
+import { userRoutes } from "./router/contactRouter";
 
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-
 // Middleware to parse JSON requests
 app.use(express.json());
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*'); 
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  
-    next();
-  });
+// Use the user routes
+app.use("/users", userRoutes);
 
-app.use("/courses",contactRouter)
-app.use("/contact",contactRouter)
 
-app.listen(port,()=>{
-    console.log("server is running port",port);   
-})
+// Global error handler middleware
+app.use((err:any, req:any, res:any, next:any) => {
+  console.error(err); // Log the error
+  res.status(500).json({ message: "Internal server error" }); // Send a generic error response
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

@@ -1,13 +1,17 @@
-import { Request, Response, Router } from "express";
-import contactRepo from "../repository/contactRepo";
+import express from "express";
+import { registerUser, loginUser } from "../service/authService";
+import { addToCartService, createProduct, fetchProducts, getCart, getLikedProducts, likeProductService } from "../service/productService";
 
-export const contactRouter = Router();
+const router = express.Router();
 
-contactRouter.post('/send-query',async(req:Request, res:Response)=>{
-    await contactRepo.sendQuery(req,res)
-})
+router.post("/register", registerUser);
+router.post("/login", loginUser);
+router.post("/products", createProduct);     // To add a new product
+router.get("/products", fetchProducts);      // To fetch all products
+router.post("/like", likeProductService);
+router.get("/likes/:userId", getLikedProducts);
 
-contactRouter.post('/send-review',async(req:Request, res:Response)=>{
-    console.log("testing")
-    await contactRepo.sendQuery(req,res)
-})
+router.post("/cart", addToCartService);
+router.get("/cart/:userId", getCart);
+
+export { router as userRoutes };
