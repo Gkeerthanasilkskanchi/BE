@@ -123,3 +123,9 @@ export const likeProduct = (userId: number, productId: number): void => {
     return stmt.all(userId);
   };
   
+  export const getUserIdByEmail = (email: string): number | null => {
+    const stmt = db.prepare("SELECT id FROM users WHERE email = ?");
+    const user :any= stmt.get(email);
+    return user ? user.userId : null;
+  };
+  
