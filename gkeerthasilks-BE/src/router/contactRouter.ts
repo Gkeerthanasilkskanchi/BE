@@ -18,5 +18,6 @@ router.get("/cart/:userId", getCart);
 router.post('/send-query',sendQuery)
 
 router.post('/send-review',sendQuery)
+router.post('/send-subscribtion',sendQuery)
 
 export { router as userRoutes };

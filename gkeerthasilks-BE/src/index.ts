@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { userRoutes } from "./router/contactRouter";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
@@ -8,7 +9,7 @@ const port = process.env.PORT || 8080;
 
 // Middleware to parse JSON requests
 app.use(express.json());
-
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 // Use the user routes
 app.use("/users", userRoutes);
 
