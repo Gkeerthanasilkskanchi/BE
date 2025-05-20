@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { createUser, getUserByEmail } from "../repository/contactRepo";
+import { log } from "console";
 
 // Register a new user
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
@@ -13,11 +14,9 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Encrypt the password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Save user in the database
-    await createUser(email, hashedPassword);
+    await createUser(email, hashedPassword,'user');
+ 
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     next(error); // Pass the error to the global error handler
@@ -37,7 +36,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
     // Compare the passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log(isMatch,password,user.password);
+
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }

@@ -8,7 +8,8 @@ db.prepare(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE,
-    password TEXT
+    password TEXT,
+    role TEXT
   )
 `).run();
 
@@ -47,21 +48,22 @@ db.prepare(`
       productId INTEGER NOT NULL,
       quantity INTEGER DEFAULT 1,
       UNIQUE(userId, productId)
-    )
-  `).run();
+    )`).run();
   
 
 // Create a new user
-export const createUser = (email: string, password: string) => {
-  const stmt = db.prepare("INSERT INTO users (email, password) VALUES (?, ?)");
-  stmt.run(email, password);
+export const createUser = (email: string, hashedPassword: string, role: string) => {
+  const stmt = db.prepare("INSERT INTO users (email, password, role) VALUES (?, ?, ?)");
+  stmt.run(email, hashedPassword, role);
 };
 
-// Get user by email
+
+
 export const getUserByEmail = (email: string) => {
   const stmt = db.prepare("SELECT * FROM users WHERE email = ?");
-  return stmt.get(email);
+  return stmt.get(email); // Returns single user object
 };
+
 
 // Add product
 export const addProduct = (
