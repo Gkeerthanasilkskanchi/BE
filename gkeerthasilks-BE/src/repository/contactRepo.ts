@@ -13,6 +13,17 @@ db.prepare(`
   )
 `).run();
 
+db.prepare(`CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  productId INTEGER NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  price REAL NOT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(userId) REFERENCES users(id),
+  FOREIGN KEY(productId) REFERENCES products(id)
+)
+`).run();
 
 // Create products table
 db.prepare(`
@@ -135,4 +146,71 @@ export const likeProduct = (userId: number, productId: number): void => {
     const user :any= stmt.get(email);
     return user ? user.userId : null;
   };
-  
+  export const createOrder = (
+  userId: number,
+  productId: number,
+  quantity: number,
+  price: number
+): void => {
+  const stmt = db.prepare(`
+    INSERT INTO orders (userId, productId, quantity, price)
+    VALUES (?, ?, ?, ?)
+  `);
+  stmt.run(userId, productId, quantity, price);
+};
+
+
+export const getProductsSoldToday = (): number => {
+  const stmt = db.prepare(`
+    SELECT SUM(quantity) as total FROM orders 
+    WHERE DATE(createdAt) = DATE('now')
+  `);
+  const result = stmt.get() as { total: number | null };
+  return result.total ?? 0;
+};
+
+export const getProductsSoldThisWeek = (): number => {
+  const stmt = db.prepare(`
+    SELECT SUM(quantity) as total FROM orders 
+    WHERE strftime('%W', createdAt) = strftime('%W', 'now')
+  `);
+  const result = stmt.get() as { total: number | null };
+  return result.total ?? 0;
+};
+
+
+export const getRevenueThisMonth = (): number => {
+  const stmt = db.prepare(`
+    SELECT SUM(quantity * price) as total FROM orders 
+    WHERE strftime('%m', createdAt) = strftime('%m', 'now')
+  `);
+  const result = stmt.get() as { total: number | null };
+  return result.total ?? 0;
+};
+
+export const getWeeklySalesData = (): { name: string; sales: number }[] => {
+  const stmt = db.prepare(`
+    SELECT strftime('%w', createdAt) as weekday, SUM(quantity) as sales
+    FROM orders
+    WHERE strftime('%W', createdAt) = strftime('%W', 'now')
+    GROUP BY weekday
+  `);
+  const raw = stmt.all() as { weekday: string; sales: number }[];
+  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return weekdays.map((day, index) => {
+    const entry = raw.find((r) => Number(r.weekday) === index);
+    return { name: day, sales: entry?.sales ?? 0 };
+  });
+};
+
+export const getSalesByCategory = (): { name: string; value: number }[] => {
+  const stmt = db.prepare(`
+    SELECT p.category, SUM(o.quantity) as value
+    FROM orders o
+    JOIN products p ON o.productId = p.id
+    GROUP BY p.category
+  `);
+  const rows = stmt.all() as { category: string; value: number }[];
+  return rows.map(row => ({ name: row.category, value: row.value }));
+};
+

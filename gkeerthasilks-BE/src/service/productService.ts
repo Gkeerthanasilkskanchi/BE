@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, getAllProducts } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, getAllProducts, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getWeeklySalesData } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser,getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -169,4 +169,58 @@ export const sendQuery = async (request: Request, response: Response) :Promise<a
             return response.status(500).json({ error: "Failed to send email. Check server logs for details." });
         }
     }
+};
+
+export const addOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const response :any=  createOrder(req.body.userId,req.body.productId,req.body.quantity,req?.body?.price);
+    res.status(200).json({ message:'Order added successfully' });
+  } catch (err) {
+    next(err);
+};
+}
+
+export const getProductsSoldTodayService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const response :any=  getProductsSoldToday();
+    res.status(200).json({ data:response });
+  } catch (err) {
+    next(err);
+};
+}
+
+export const getProductsSoldThisWeekService =async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const response :any= await getProductsSoldThisWeek();
+    res.status(200).json({ data:response });
+  } catch (err) {
+    next(err);
+};
+}
+
+export const getRevenueThisMonthService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const response :any= await  getRevenueThisMonth();
+    res.status(200).json({ data:response });
+  } catch (err) {
+    next(err);
+};
+};
+
+export const getWeeklySalesDataService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const response :any= await getWeeklySalesData();
+    res.status(200).json({ data:response });
+  } catch (err) {
+    next(err);
+};
+};
+
+export const getSalesByCategoryService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const response :any= await getSalesByCategory();
+    res.status(200).json({ data:response });
+  } catch (err) {
+    next(err);
+};
 };
