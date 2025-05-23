@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import { createUser, getUserByEmail } from "../repository/contactRepo";
+import { createUser, getUserByEmail, getUserList } from "../repository/contactRepo";
 import { log } from "console";
 
 // Register a new user
@@ -41,7 +41,19 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    res.status(200).json({ message: "Login successful" });
+    res.status(200).json({ message: "Login successful",role:user.role });
+  } catch (error) {
+    next(error); // Pass the error to the global error handler
+  }
+};
+
+export const getUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+
+  try {
+    // Check if the user already exists
+    const existingUser = await getUserList();
+    
+    res.status(201).json({ data:existingUser});
   } catch (error) {
     next(error); // Pass the error to the global error handler
   }

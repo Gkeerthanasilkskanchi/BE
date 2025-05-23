@@ -64,6 +64,11 @@ export const getUserByEmail = (email: string) => {
   return stmt.get(email); // Returns single user object
 };
 
+export const getUserList = (): any[] => {
+  const stmt = db.prepare("SELECT * FROM users");
+  return stmt.all();
+};
+
 
 // Add product
 export const addProduct = (
