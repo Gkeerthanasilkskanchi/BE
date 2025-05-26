@@ -10,10 +10,10 @@ router.post("/login", loginUser);
 router.post("/products", createProduct);     
 router.get("/products", fetchProducts);     
 router.post("/like", likeProductService);
-router.get("/likes/:userId", getLikedProducts);
+router.get("/likes/userId", getLikedProducts);
 
 router.post("/cart", addToCartService);
-router.get("/cart/:userId", getCart);
+router.get("/cart/userId", getCart);
 
 
 router.post('/send-query',sendQuery)

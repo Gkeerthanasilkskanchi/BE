@@ -47,7 +47,7 @@ export const likeProductService = async (req: Request, res: Response, next: Next
 
 // Get liked products
 export const getLikedProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const email :any= parseInt(req.params.email);
+  const email :any= parseInt(req.params.userId);
   try {
     const userId:any = getUserIdByEmail(email);
     const products = getLikedProductsByUser(userId);
@@ -61,7 +61,10 @@ export const getLikedProducts = async (req: Request, res: Response, next: NextFu
 export const addToCartService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, productId, quantity } = req.body;
   try {
-    const userId:any = getUserIdByEmail(email);
+
+    console.log(email)
+    const userId :any = getUserIdByEmail(email);
+    console.log(userId)
     addToCart(userId, productId, quantity || 1);
     res.status(200).json({ message: "Added to cart" });
   } catch (err) {
