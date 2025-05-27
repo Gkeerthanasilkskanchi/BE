@@ -7,15 +7,18 @@ import dotenv from "dotenv";
 dotenv.config(); // Load environment variables
 
 // Add a new product
-export const createProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { image, title, price, about, cloth, category, bought_by, saree_type } = req.body;
+export const createProduct = async (req: any, res: Response, next: NextFunction): Promise<any> => {
+  const { title, price, about, cloth, category, bought_by, saree_type } = req.body;
+  const file = req.file;
+
+  if (!file || !title || !price || !about || !cloth || !category || !bought_by || !saree_type) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  const imagePath = file.path; // Store path to uploaded file
 
   try {
-    if (!image || !title || !price || !about || !cloth || !category || !bought_by || !saree_type) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-
-    await addProduct(image, title, price, about, cloth, category, bought_by, saree_type);
+    await addProduct(imagePath, title, parseFloat(price), about, cloth, category, bought_by, saree_type);
     res.status(201).json({ message: "Product added successfully" });
   } catch (error) {
     next(error);
@@ -38,7 +41,8 @@ export const likeProductService = async (req: Request, res: Response, next: Next
   const { email, productId } = req.body;
   try {
     const userId :any= getUserIdByEmail(email);
-    likeProduct(userId, productId);
+    
+    await likeProduct(userId, productId);
     res.status(200).json({ message: "Product liked" });
   } catch (err) {
     next(err);
@@ -48,9 +52,10 @@ export const likeProductService = async (req: Request, res: Response, next: Next
 // Get liked products
 export const getLikedProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const email :any= parseInt(req.params.userId);
-  try {
+  try {    
     const userId:any = getUserIdByEmail(email);
-    const products = getLikedProductsByUser(userId);
+    const products =await getLikedProductsByUser(userId);
+    
     res.status(200).json(products);
   } catch (err) {
     next(err);
@@ -65,7 +70,7 @@ export const addToCartService = async (req: Request, res: Response, next: NextFu
     console.log(email)
     const userId :any = getUserIdByEmail(email);
     console.log(userId)
-    addToCart(userId, productId, quantity || 1);
+   await addToCart(userId, productId, quantity || 1);
     res.status(200).json({ message: "Added to cart" });
   } catch (err) {
     next(err);
@@ -77,7 +82,7 @@ export const getCart = async (req: Request, res: Response, next: NextFunction): 
   const email :any= parseInt(req.params.email);
   try {
     const userId:any = getUserIdByEmail(email);
-    const cart = getCartByUser(userId);
+    const cart = await getCartByUser(userId);
     res.status(200).json(cart);
   } catch (err) {
     next(err);

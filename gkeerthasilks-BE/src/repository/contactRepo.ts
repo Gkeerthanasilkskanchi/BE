@@ -107,9 +107,16 @@ export const addProduct = (
   
   // Like a product
 export const likeProduct = (userId: number, productId: number): void => {
-    const stmt = db.prepare(`INSERT OR IGNORE INTO liked_products (userId, productId) VALUES (?, ?)`);
+  const exists = db.prepare(`SELECT 1 FROM liked_products WHERE userId = ? AND productId = ?`).get(userId, productId);
+
+  if (!exists) {
+    const stmt = db.prepare(`INSERT INTO liked_products (userId, productId) VALUES (?, ?)`);
     stmt.run(userId, productId);
-  };
+  } else {
+    console.log(`User ${userId} already liked product ${productId}`);
+  }
+};
+
   
   // Get liked products for a user
   export const getLikedProductsByUser = (userId: number): any[] => {
@@ -144,7 +151,8 @@ export const likeProduct = (userId: number, productId: number): void => {
   export const getUserIdByEmail = (email: string): number | null => {
     const stmt = db.prepare("SELECT id FROM users WHERE email = ?");
     const user :any= stmt.get(email);
-    return user ? user.userId : null;
+    
+    return user ? user.id : null;
   };
   export const createOrder = (
   userId: number,
