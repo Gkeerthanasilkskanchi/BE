@@ -22,7 +22,7 @@ router.post('/send-query',sendQuery)
 router.post('/send-review',sendQuery)
 router.post('/send-subscribtion',sendQuery)
 router.get('/get-user-list',getUser);
-router.get("/create-order", addOrder);
+router.post("/create-order", addOrder);
 
 router.get("/getProductsSoldTodayService", getProductsSoldTodayService);
 

@@ -201,7 +201,8 @@ export const sendQuery = async (request: Request, response: Response) :Promise<a
 
 export const addOrder = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const response :any=  createOrder(req.body.userId,req.body.productId,req.body.quantity,req?.body?.price);
+    const userId:any = await getUserIdByEmail(req.body.email);
+    await createOrder(userId,req.body.id,req.body.quantity,req?.body?.price);
     res.status(200).json({ message:'Order added successfully' });
   } catch (err) {
     next(err);
