@@ -92,11 +92,18 @@ export const addToCartService = async (req: Request, res: Response, next: NextFu
 
 // Get cart
 export const getCart = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const email :any= parseInt(req.params.email);
+  const email :any= req.params.userId;
   try {
     const userId:any = getUserIdByEmail(email);
     const cart = await getCartByUser(userId);
-    res.status(200).json(cart);
+    const modifiedProducts = cart.map((product: any) => {
+      return {
+        ...product,
+        image: `${req.protocol}://${req.get("host")}/${product.image.replace(/\\/g, "/")}`
+
+      };
+    });
+    res.status(200).json(modifiedProducts);
   } catch (err) {
     next(err);
   }

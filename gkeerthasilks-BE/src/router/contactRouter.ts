@@ -14,7 +14,7 @@ router.post("/like", likeProductService);
 router.get("/likes/:userId", getLikedProducts);
 
 router.post("/cart", addToCartService);
-router.get("/cart/userId", getCart);
+router.get("/cart/:userId", getCart);
 
 
 router.post('/send-query',sendQuery)
