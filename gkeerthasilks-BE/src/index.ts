@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import { userRoutes } from "./router/contactRouter";
 import cors from "cors";
+import path from "path";
 
 dotenv.config();
 const app = express();
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 // Use the user routes
 app.use("/users", userRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 
 // Global error handler middleware

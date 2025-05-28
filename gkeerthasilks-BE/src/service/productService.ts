@@ -25,15 +25,24 @@ export const createProduct = async (req: any, res: Response, next: NextFunction)
   }
 };
 
-// Get all products
 export const fetchProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const products = await getAllProducts(); // In case you make it async in the repo
-    res.status(200).json(products);
+    const products = await getAllProducts();
+
+    const modifiedProducts = products.map((product: any) => {
+      return {
+        ...product,
+        image: `${req.protocol}://${req.get("host")}/${product.image.replace(/\\/g, "/")}`
+
+      };
+    });
+
+    res.status(200).json(modifiedProducts);
   } catch (error) {
     next(error);
   }
 };
+
 
 
 // Like a product
@@ -41,7 +50,6 @@ export const likeProductService = async (req: Request, res: Response, next: Next
   const { email, productId } = req.body;
   try {
     const userId :any= getUserIdByEmail(email);
-    
     await likeProduct(userId, productId);
     res.status(200).json({ message: "Product liked" });
   } catch (err) {
@@ -51,12 +59,20 @@ export const likeProductService = async (req: Request, res: Response, next: Next
 
 // Get liked products
 export const getLikedProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const email :any= parseInt(req.params.userId);
+  const email :any= req.params.userId;
   try {    
     const userId:any = getUserIdByEmail(email);
-    const products =await getLikedProductsByUser(userId);
     
-    res.status(200).json(products);
+    const products =await getLikedProductsByUser(userId);
+     const modifiedProducts = products.map((product: any) => {
+      return {
+        ...product,
+        image: `${req.protocol}://${req.get("host")}/${product.image.replace(/\\/g, "/")}`
+
+      };
+    });
+    
+    res.status(200).json(modifiedProducts);
   } catch (err) {
     next(err);
   }
@@ -66,10 +82,7 @@ export const getLikedProducts = async (req: Request, res: Response, next: NextFu
 export const addToCartService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, productId, quantity } = req.body;
   try {
-
-    console.log(email)
     const userId :any = getUserIdByEmail(email);
-    console.log(userId)
    await addToCart(userId, productId, quantity || 1);
     res.status(200).json({ message: "Added to cart" });
   } catch (err) {
