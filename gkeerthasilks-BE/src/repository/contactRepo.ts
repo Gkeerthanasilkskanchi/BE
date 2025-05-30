@@ -9,7 +9,8 @@ db.prepare(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE,
     password TEXT,
-    role TEXT
+    role TEXT,
+    userName TeXT
   )
 `).run();
 
@@ -63,9 +64,9 @@ db.prepare(`
   
 
 // Create a new user
-export const createUser = (email: string, hashedPassword: string, role: string) => {
-  const stmt = db.prepare("INSERT INTO users (email, password, role) VALUES (?, ?, ?)");
-  stmt.run(email, hashedPassword, role);
+export const createUser = (email: string, hashedPassword: string, role: string,userName:string) => {
+  const stmt = db.prepare("INSERT INTO users (email, password, role,userName) VALUES (?, ?, ?,?)");
+  stmt.run(email, hashedPassword, role,userName);
 };
 
 

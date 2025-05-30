@@ -5,7 +5,7 @@ import { log } from "console";
 
 // Register a new user
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const { email, password } = req.body;
+  const { email, password ,userName} = req.body;
 
   try {
     // Check if the user already exists
@@ -15,7 +15,7 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await createUser(email, hashedPassword,'admin');
+    await createUser(email, hashedPassword,'user',userName);
  
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
@@ -31,7 +31,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     // Fetch user from the database
     const user :any= await getUserByEmail(email);
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials" ,data:user});
     }
 
     // Compare the passwords
