@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, getAllProducts, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getWeeklySalesData } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProducts, getPaginatedProducts, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getWeeklySalesData, searchProducts, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser,getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -15,10 +15,10 @@ export const createProduct = async (req: any, res: Response, next: NextFunction)
     return res.status(400).json({ message: "All fields are required." });
   }
 
-  const imagePath = file.path; // Store path to uploaded file
+  const imagePath = file.path; 
 
   try {
-    await addProduct(imagePath, title, parseFloat(price), about, cloth, category, bought_by, saree_type);
+    await addProduct(imagePath, title, parseFloat(price), about, cloth, category, bought_by, saree_type,email);
     res.status(201).json({ message: "Product added successfully" });
   } catch (error) {
     next(error);
@@ -253,3 +253,48 @@ export const getSalesByCategoryService = async (req: Request, res: Response, nex
     next(err);
 };
 };
+
+export const deleteProduct = async(req:Request,res:Response,next:NextFunction):Promise<any> => {
+  try {
+    const response :any= await updateProductStatus(req.body.productId,req.body.status,req.body.email);
+    res.status(200).json({ data:response });
+  } catch (err) {
+    next(err);
+};
+}
+
+export const updateProduct = async (req: any, res: Response, next: NextFunction): Promise<any> => {
+  const {id, title, price, about, cloth, category, bought_by, saree_type,email } = req.body;
+  const file = req.file;
+
+  if (!file || !title || !price || !about || !cloth || !category || !bought_by || !saree_type) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  const imagePath = file.path; 
+
+  try {
+    editProduct(id,imagePath, title, parseFloat(price), about, cloth, category, bought_by, saree_type, email);
+    res.status(201).json({ message: "Product added successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const search = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const product:any = await searchProducts(req.body.key);
+    res.status(200).json({ data:product });
+  } catch (err) {
+    next(err);
+};
+}
+
+export const getFilteredProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  try {
+    const product:any = await getPaginatedProducts(req.body.page);
+    res.status(200).json({ data:product });
+  } catch (err) {
+    next(err);
+};
+}

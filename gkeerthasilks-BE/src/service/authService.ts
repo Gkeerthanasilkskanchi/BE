@@ -1,14 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { createUser, getUserByEmail, getUserList } from "../repository/contactRepo";
-import { log } from "console";
 
-// Register a new user
+
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password ,userName} = req.body;
 
   try {
-    // Check if the user already exists
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
@@ -19,22 +17,19 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
  
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
-    next(error); // Pass the error to the global error handler
+    next(error); 
   }
 };
 
-// Login a user (validate the password)
 export const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   const { email, password } = req.body;
 
   try {
-    // Fetch user from the database
     const user :any= await getUserByEmail(email);
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" ,data:user});
     }
 
-    // Compare the passwords
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -43,18 +38,17 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
     res.status(200).json({ message: "Login successful",role:user.role });
   } catch (error) {
-    next(error); // Pass the error to the global error handler
+    next(error);
   }
 };
 
 export const getUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
 
   try {
-    // Check if the user already exists
     const existingUser = await getUserList();
     
     res.status(201).json({ data:existingUser});
   } catch (error) {
-    next(error); // Pass the error to the global error handler
+    next(error);
   }
 };

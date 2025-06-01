@@ -28,18 +28,24 @@ db.prepare(`CREATE TABLE IF NOT EXISTS orders (
 
 // Create products table
 db.prepare(`
-    CREATE TABLE IF NOT EXISTS products (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      image TEXT,
-      title TEXT,
-      price REAL,
-      about TEXT,
-      cloth TEXT,
-      category TEXT,
-      bought_by TEXT,
-      saree_type TEXT
-    )
-  `).run();
+  CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    image TEXT,
+    title TEXT,
+    price REAL,
+    about TEXT,
+    cloth TEXT,
+    category TEXT,
+    bought_by TEXT,
+    saree_type TEXT,
+    created_at TEXT,
+    created_by TEXT,
+    modified_by TEXT,
+    modified_at TEXT,
+    is_active INTEGER DEFAULT 1
+  )
+`).run();
+
   
 
   // Create liked_products table
@@ -84,21 +90,51 @@ export const getUserList = (): any[] => {
 
 // Add product
 export const addProduct = (
-    image: string,
-    title: string,
-    price: number,
-    about: string,
-    cloth: string,
-    category: string,
-    bought_by: string,
-    saree_type: string
-  ): void => {
-    const stmt = db.prepare(`
-      INSERT INTO products (image, title, price, about, cloth, category, bought_by, saree_type)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(image, title, price, about, cloth, category, bought_by, saree_type);
-  };
+  image: string,
+  title: string,
+  price: number,
+  about: string,
+  cloth: string,
+  category: string,
+  bought_by: string,
+  saree_type: string,
+  created_by: string
+): void => {
+  const created_at = new Date().toISOString(); // current timestamp
+  const is_active = 1; // product is active by default
+
+  const stmt = db.prepare(`
+    INSERT INTO products (
+      image,
+      title,
+      price,
+      about,
+      cloth,
+      category,
+      bought_by,
+      saree_type,
+      created_at,
+      created_by,
+      is_active
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(
+    image,
+    title,
+    price,
+    about,
+    cloth,
+    category,
+    bought_by,
+    saree_type,
+    created_at,
+    created_by,
+    is_active
+  );
+};
+
   
   // Get all products
   export const getAllProducts = (): any[] => {
@@ -116,6 +152,23 @@ export const likeProduct = (userId: number, productId: number): void => {
   } else {
     console.log(`User ${userId} already liked product ${productId}`);
   }
+};
+
+export const updateProductStatus = (
+  productId: number,
+  isActive: boolean,
+  modifiedBy: string
+): void => {
+  const modified_at = new Date().toISOString(); 
+  const stmt = db.prepare(`
+    UPDATE products
+    SET is_active = ?,
+        modified_by = ?,
+        modified_at = ?
+    WHERE id = ?
+  `);
+
+  stmt.run(isActive ? 1 : 0, modifiedBy, modified_at, productId);
 };
 
   
@@ -221,5 +274,88 @@ export const getSalesByCategory = (): { name: string; value: number }[] => {
   `);
   const rows = stmt.all() as { category: string; value: number }[];
   return rows.map(row => ({ name: row.category, value: row.value }));
+};
+
+export const editProduct = (
+  id: number,
+  image: string,
+  title: string,
+  price: number,
+  about: string,
+  cloth: string,
+  category: string,
+  bought_by: string,
+  saree_type: string,
+  modified_by: string
+): void => {
+  const modified_at = new Date().toISOString();
+
+  const stmt = db.prepare(`
+    UPDATE products
+    SET
+      image = ?,
+      title = ?,
+      price = ?,
+      about = ?,
+      cloth = ?,
+      category = ?,
+      bought_by = ?,
+      saree_type = ?,
+      modified_by = ?,
+      modified_at = ?
+    WHERE id = ?
+  `);
+
+  stmt.run(
+    image,
+    title,
+    price,
+    about,
+    cloth,
+    category,
+    bought_by,
+    saree_type,
+    modified_by,
+    modified_at,
+    id
+  );
+};
+
+export const searchProducts = (keyword: string): any[] => {
+  const searchTerm = `%${keyword}%`;
+
+  const stmt = db.prepare(`
+    SELECT * FROM products
+    WHERE
+      title LIKE ? OR
+      category LIKE ? OR
+      saree_type LIKE ?
+    AND is_active = 1
+  `);
+
+  return stmt.all(searchTerm, searchTerm, searchTerm);
+};
+export const getPaginatedProducts = (page: number, pageSize: number = 10): { products: any[], total: number } => {
+  const offset = (page - 1) * pageSize;
+
+  // Get total count of active products
+  const countStmt = db.prepare(`SELECT COUNT(*) as total FROM products WHERE is_active = 1`);
+  const countResult = countStmt.get() as { total: number };
+  const total = countResult.total;
+
+  // Get paginated products
+  const stmt = db.prepare(`
+    SELECT * FROM products
+    WHERE is_active = 1
+    ORDER BY created_at DESC
+    LIMIT ? OFFSET ?
+  `);
+  const products = stmt.all(pageSize, offset);
+
+
+  return {
+    products,
+    total
+  };
 };
 

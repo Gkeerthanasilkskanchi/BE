@@ -1,7 +1,7 @@
 import express from "express";
 import { registerUser, loginUser, getUser } from "../service/authService";
-import { addOrder, addToCartService, createProduct, fetchProducts, getCart, getLikedProducts, getProductsSoldThisWeekService, getProductsSoldTodayService, getRevenueThisMonthService, getSalesByCategoryService, getWeeklySalesDataService, likeProductService, sendQuery } from "../service/productService";
-import { createOrder } from "../repository/contactRepo";
+import { addOrder, addToCartService, createProduct, deleteProduct, fetchProducts, getCart, getFilteredProduct, getLikedProducts, getProductsSoldThisWeekService, getProductsSoldTodayService, getRevenueThisMonthService, getSalesByCategoryService, getWeeklySalesDataService, likeProductService, search, sendQuery, updateProduct } from "../service/productService";
+import { createOrder, editProduct } from "../repository/contactRepo";
 import { upload } from "./middleware";
 
 const router = express.Router();
@@ -33,4 +33,10 @@ router.get('/getRevenueThisMonthService',getRevenueThisMonthService)
 router.get('/getWeeklySalesDataService',getWeeklySalesDataService)
 router.get('/getSalesByCategoryService',getSalesByCategoryService);
 
+
+
+router.get('/deleteProduct',deleteProduct);
+router.get('/editProduct',updateProduct);
+router.get('/search',search);
+router.get('/getFilteredProduct',getFilteredProduct);
 export { router as userRoutes };
