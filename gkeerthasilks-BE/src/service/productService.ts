@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, editProduct, getAllProducts, getPaginatedProducts, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getWeeklySalesData, searchProducts, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProducts, getPaginatedProducts, getProductById, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getWeeklySalesData, searchProducts, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser,getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -298,3 +298,14 @@ export const getFilteredProduct = async (req: Request, res: Response, next: Next
     next(err);
 };
 }
+
+export const fetchProductById = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+  
+  const product =await getProductById(parseInt(req.params.id));
+  product.image= `${req.protocol}://${req.get("host")}/${product.image.replace(/\\/g, "/")}`
+  if (!product) {
+    throw new Error(`Product with ID ${parseInt(req.params.id)} not found or inactive.`);
+  }
+
+   res.status(200).json({ data:product });
+};

@@ -359,3 +359,10 @@ export const getPaginatedProducts = (page: number, pageSize: number = 10): { pro
   };
 };
 
+export const getProductById = (id: number): any | null => {
+  const stmt = db.prepare(`
+    SELECT * FROM products
+    WHERE id = ? AND is_active = 1
+  `);
+  return stmt.get(id) || null;
+};

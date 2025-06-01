@@ -1,6 +1,6 @@
 import express from "express";
 import { registerUser, loginUser, getUser } from "../service/authService";
-import { addOrder, addToCartService, createProduct, deleteProduct, fetchProducts, getCart, getFilteredProduct, getLikedProducts, getProductsSoldThisWeekService, getProductsSoldTodayService, getRevenueThisMonthService, getSalesByCategoryService, getWeeklySalesDataService, likeProductService, search, sendQuery, updateProduct } from "../service/productService";
+import { addOrder, addToCartService, createProduct, deleteProduct, fetchProductById, fetchProducts, getCart, getFilteredProduct, getLikedProducts, getProductsSoldThisWeekService, getProductsSoldTodayService, getRevenueThisMonthService, getSalesByCategoryService, getWeeklySalesDataService, likeProductService, search, sendQuery, updateProduct } from "../service/productService";
 import { createOrder, editProduct } from "../repository/contactRepo";
 import { upload } from "./middleware";
 
@@ -35,8 +35,9 @@ router.get('/getSalesByCategoryService',getSalesByCategoryService);
 
 
 
-router.get('/deleteProduct',deleteProduct);
-router.get('/editProduct',updateProduct);
-router.get('/search',search);
-router.get('/getFilteredProduct',getFilteredProduct);
+router.post('/deleteProduct',deleteProduct);
+router.get('/getProductById/:id',fetchProductById);
+router.post('/editProduct',updateProduct);
+router.post('/search',search);
+router.post('/getFilteredProduct',getFilteredProduct);
 export { router as userRoutes };
