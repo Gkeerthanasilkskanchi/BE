@@ -8,7 +8,7 @@ dotenv.config(); // Load environment variables
 
 // Add a new product
 export const createProduct = async (req: any, res: Response, next: NextFunction): Promise<any> => {
-  const { title, price, about, cloth, category, bought_by, saree_type } = req.body;
+  const { title, price, about, cloth, category, bought_by, saree_type,email } = req.body;
   const file = req.file;
 
   if (!file || !title || !price || !about || !cloth || !category || !bought_by || !saree_type) {
