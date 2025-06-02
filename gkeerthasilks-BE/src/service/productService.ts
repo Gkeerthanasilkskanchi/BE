@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, editProduct, getAllProducts, getPaginatedProducts, getProductById, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getWeeklySalesData, searchProducts, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProducts, getAllProductsWithFlags, getPaginatedProducts, getProductById, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getUserByEmail, getWeeklySalesData, searchProducts, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser,getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -25,17 +25,17 @@ export const createProduct = async (req: any, res: Response, next: NextFunction)
   }
 };
 
-export const fetchProducts = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+export const fetchProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const products = await getAllProducts();
+    
+    const userId :any= req.params?.email; // or however you're retrieving user ID
+    const user :any= await getUserByEmail(userId);
 
-    const modifiedProducts = products.map((product: any) => {
-      return {
-        ...product,
-        image: `${req.protocol}://${req.get("host")}/${product.image.replace(/\\/g, "/")}`
-
-      };
-    });
+      const products = getAllProductsWithFlags(user.id || null);
+    const modifiedProducts = products.map(product => ({
+      ...product,
+      image: `${req.protocol}://${req.get("host")}/${product.image?.replace(/\\/g, "/")}`,
+    }));
 
     res.status(200).json(modifiedProducts);
   } catch (error) {

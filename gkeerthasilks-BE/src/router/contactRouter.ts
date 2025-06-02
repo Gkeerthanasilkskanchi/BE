@@ -9,7 +9,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/products",upload.single('image'), createProduct);     
-router.get("/products", fetchProducts);     
+router.get("/products/:email", fetchProducts);     
 router.post("/like", likeProductService);
 router.get("/likes/:userId", getLikedProducts);
 
