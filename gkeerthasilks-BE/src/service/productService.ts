@@ -28,10 +28,13 @@ export const createProduct = async (req: any, res: Response, next: NextFunction)
 export const fetchProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     
-    const userId :any= req.params?.email; // or however you're retrieving user ID
-    const user :any= await getUserByEmail(userId);
+    const userId :string= req.params?.email;
 
-      const products = getAllProductsWithFlags(user.id || null);
+    let user:any=null; 
+    if(userId !=null) {user = await getUserByEmail(userId);
+    }
+
+      const products = getAllProductsWithFlags(user || null);
     const modifiedProducts = products.map(product => ({
       ...product,
       image: `${req.protocol}://${req.get("host")}/${product.image?.replace(/\\/g, "/")}`,
@@ -292,7 +295,8 @@ export const search = async (req: Request, res: Response, next: NextFunction): P
 
 export const getFilteredProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const product:any = await getPaginatedProducts(req.body.page);
+    const page :number = parseInt(req.body.page);
+    const product:any = await getPaginatedProducts(page);
     res.status(200).json({ data:product });
   } catch (err) {
     next(err);

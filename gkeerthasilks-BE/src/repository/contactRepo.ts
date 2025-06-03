@@ -46,9 +46,9 @@ db.prepare(`
   )
 `).run();
 
-  
 
-  // Create liked_products table
+
+// Create liked_products table
 db.prepare(`
     CREATE TABLE IF NOT EXISTS liked_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,9 +57,9 @@ db.prepare(`
       UNIQUE(userId, productId)
     )
   `).run();
-  
-  // Create cart_products table
-  db.prepare(`
+
+// Create cart_products table
+db.prepare(`
     CREATE TABLE IF NOT EXISTS cart_products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId INTEGER NOT NULL,
@@ -67,12 +67,12 @@ db.prepare(`
       quantity INTEGER DEFAULT 1,
       UNIQUE(userId, productId)
     )`).run();
-  
+
 
 // Create a new user
-export const createUser = (email: string, hashedPassword: string, role: string,userName:string) => {
+export const createUser = (email: string, hashedPassword: string, role: string, userName: string) => {
   const stmt = db.prepare("INSERT INTO users (email, password, role,userName) VALUES (?, ?, ?,?)");
-  stmt.run(email, hashedPassword, role,userName);
+  stmt.run(email, hashedPassword, role, userName);
 };
 
 
@@ -135,13 +135,13 @@ export const addProduct = (
   );
 };
 
-  
-  // Get all products
-  export const getAllProducts = (): any[] => {
-    const stmt = db.prepare("SELECT * FROM products");
-    return stmt.all();
-  };
-  
+
+// Get all products
+export const getAllProducts = (): any[] => {
+  const stmt = db.prepare("SELECT * FROM products");
+  return stmt.all();
+};
+
 
 export const likeProduct = (userId: number, productId: number): void => {
   const exists = db
@@ -162,7 +162,7 @@ export const updateProductStatus = (
   isActive: boolean,
   modifiedBy: string
 ): void => {
-  const modified_at = new Date().toISOString(); 
+  const modified_at = new Date().toISOString();
   const stmt = db.prepare(`
     UPDATE products
     SET is_active = ?,
@@ -174,7 +174,7 @@ export const updateProductStatus = (
   stmt.run(isActive ? 1 : 0, modifiedBy, modified_at, productId);
 };
 
-  
+
 export const getLikedProductsByUser = (userId: number): any[] => {
   const likedStmt = db.prepare(`
     SELECT p.* FROM products p
@@ -185,20 +185,20 @@ export const getLikedProductsByUser = (userId: number): any[] => {
 
   // Also fetch cart product IDs to set `is_product_in_cart`
   const cartProductIds = new Set(
-    db.prepare(`SELECT productId FROM cart_products WHERE userId = ?`).all(userId).map((p:any) => p.productId)
+    db.prepare(`SELECT productId FROM cart_products WHERE userId = ?`).all(userId).map((p: any) => p.productId)
   );
 
-  return likedProducts.map((product:any) => ({
+  return likedProducts.map((product: any) => ({
     ...product,
     is_product_liked: true,
     is_product_in_cart: cartProductIds.has(product.id),
   }));
 };
 
-  
-  // Add product to cart
-  export const addToCart = (userId: number, productId: number, quantity: number): void => {
-    const exists = db
+
+// Add product to cart
+export const addToCart = (userId: number, productId: number, quantity: number): void => {
+  const exists = db
     .prepare(`SELECT 1 FROM cart_products WHERE userId = ? AND productId = ?`)
     .get(userId, productId);
 
@@ -218,8 +218,8 @@ export const getLikedProductsByUser = (userId: number): any[] => {
 
     console.log(`Removed product ${productId} from cart for user ${userId}`);
   }
-  };
-  
+};
+
 export const getCartByUser = (userId: number): any[] => {
   const cartStmt = db.prepare(`
     SELECT p.*, c.quantity FROM products p
@@ -230,24 +230,24 @@ export const getCartByUser = (userId: number): any[] => {
 
   // Also fetch liked product IDs to set `is_product_liked`
   const likedProductIds = new Set(
-    db.prepare(`SELECT productId FROM liked_products WHERE userId = ?`).all(userId).map((p:any) => p.productId)
+    db.prepare(`SELECT productId FROM liked_products WHERE userId = ?`).all(userId).map((p: any) => p.productId)
   );
 
-  return cartProducts.map((product:any) => ({
+  return cartProducts.map((product: any) => ({
     ...product,
     is_product_in_cart: true,
     is_product_liked: likedProductIds.has(product.id),
   }));
 };
 
-  
-  export const getUserIdByEmail = (email: string): number | null => {
-    const stmt = db.prepare("SELECT id FROM users WHERE email = ?");
-    const user :any= stmt.get(email);
-    
-    return user ? user.id : null;
-  };
-  export const createOrder = (
+
+export const getUserIdByEmail = (email: string): number | null => {
+  const stmt = db.prepare("SELECT id FROM users WHERE email = ?");
+  const user: any = stmt.get(email);
+
+  return user ? user.id : null;
+};
+export const createOrder = (
   userId: number,
   productId: number,
   quantity: number,
@@ -374,7 +374,7 @@ export const searchProducts = (keyword: string): any[] => {
 
   return stmt.all(searchTerm, searchTerm, searchTerm);
 };
-export const getPaginatedProducts = (page: number, pageSize: number = 10): { products: any[], total: number } => {
+export const getPaginatedProducts = (page: any, pageSize: number = 10): { products: any[], total: number } => {
   const offset = (page - 1) * pageSize;
 
   // Get total count of active products
@@ -407,18 +407,24 @@ export const getProductById = (id: number): any | null => {
 };
 
 
-export const getAllProductsWithFlags = (userId: number) => {
+export const getAllProductsWithFlags = (user: any) => {
+  let likedIds: any = null;
+  let cartIds: any = null;
+
   const productStmt = db.prepare('SELECT * FROM products');
-  const likedStmt = db.prepare('SELECT productId FROM liked_products WHERE userId = ?');
-  const cartStmt = db.prepare('SELECT productId FROM cart_products WHERE userId = ?');
-
   const products = productStmt.all();
-  const likedIds = new Set(likedStmt.all(userId).map((row:any) => row.productId));
-  const cartIds = new Set(cartStmt.all(userId).map((row:any) => row.productId));
+  if (user != null) {
+  
+    const likedStmt = db.prepare('SELECT productId FROM liked_products WHERE userId = ?');
+    const cartStmt = db.prepare('SELECT productId FROM cart_products WHERE userId = ?');
+    likedIds = new Set(likedStmt.all(user.id).map((row: any) => row.productId));
+    cartIds = new Set(cartStmt.all(user.id).map((row: any) => row.productId));
+  }
 
-  return products.map((product:any) => ({
+
+  return products.map((product: any) => ({
     ...product,
-    is_product_liked: likedIds.has(product.id),
-    is_product_in_cart: cartIds.has(product.id),
+    is_product_liked: likedIds? likedIds.has(product.id):null,
+    is_product_in_cart:cartIds? cartIds.has(product.id):null,
   }));
 };

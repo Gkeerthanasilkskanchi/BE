@@ -37,7 +37,7 @@ router.get('/getSalesByCategoryService',getSalesByCategoryService);
 
 router.post('/deleteProduct',deleteProduct);
 router.get('/getProductById/:id',fetchProductById);
-router.post('/editProduct',updateProduct);
+router.post('/editProduct',upload.single('image'),updateProduct);
 router.post('/search',search);
 router.post('/getFilteredProduct',getFilteredProduct);
 export { router as userRoutes };
