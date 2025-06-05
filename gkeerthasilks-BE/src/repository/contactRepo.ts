@@ -159,8 +159,7 @@ export const likeProduct = (userId: number, productId: number): void => {
 
 export const updateProductStatus = (
   productId: number,
-  isActive: boolean,
-  modifiedBy: string
+  isActive: boolean
 ): void => {
   const modified_at = new Date().toISOString();
   const stmt = db.prepare(`
@@ -171,7 +170,7 @@ export const updateProductStatus = (
     WHERE id = ?
   `);
 
-  stmt.run(isActive ? 1 : 0, modifiedBy, modified_at, productId);
+  stmt.run(isActive ? 1 : 0, 'admin', modified_at, productId);
 };
 
 

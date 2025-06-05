@@ -54,7 +54,7 @@ export const likeProductService = async (req: Request, res: Response, next: Next
   try {
     const userId :any= getUserIdByEmail(email);
     await likeProduct(userId, productId);
-    res.status(200).json({ message: "Product liked" });
+    res.status(200).json({ message: "Status Updated Successfully" });
   } catch (err) {
     next(err);
   }
@@ -87,7 +87,7 @@ export const addToCartService = async (req: Request, res: Response, next: NextFu
   try {
     const userId :any = getUserIdByEmail(email);
    await addToCart(userId, productId, quantity || 1);
-    res.status(200).json({ message: "Added to cart" });
+    res.status(200).json({ message: "Status Updated Successfully" });
   } catch (err) {
     next(err);
   }
@@ -259,7 +259,9 @@ export const getSalesByCategoryService = async (req: Request, res: Response, nex
 
 export const deleteProduct = async(req:Request,res:Response,next:NextFunction):Promise<any> => {
   try {
-    const response :any= await updateProductStatus(req.body.productId,req.body.status,req.body.email);
+    
+    
+    const response :any= await updateProductStatus(parseInt(req.params.id),false);
     res.status(200).json({ data:response });
   } catch (err) {
     next(err);
@@ -277,7 +279,8 @@ export const updateProduct = async (req: any, res: Response, next: NextFunction)
   const imagePath = file.path; 
 
   try {
-    editProduct(id,imagePath, title, parseFloat(price), about, cloth, category, bought_by, saree_type, email);
+    
+   await editProduct(id,imagePath, title, parseFloat(price), about, cloth, category, bought_by, saree_type, email);
     res.status(201).json({ message: "Product added successfully" });
   } catch (error) {
     next(error);
