@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { addProduct, createOrder, editProduct, getAllProducts, getAllProductsWithFlags, getPaginatedProducts, getProductById, getProductsSoldThisWeek, getProductsSoldToday, getRevenueThisMonth, getSalesByCategory, getUserByEmail, getWeeklySalesData, searchProducts, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
+import { addProduct, createOrder, editProduct, getAllProducts, getAllProductsWithFlags, getFilteredProductFromDB, getProductById,getUserByEmail, updateProductStatus } from "../repository/contactRepo"; // or productRepo.ts
 import { likeProduct, getLikedProductsByUser, addToCart, getCartByUser,getUserIdByEmail } from "../repository/contactRepo";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
@@ -212,51 +212,6 @@ export const addOrder = async (req: Request, res: Response, next: NextFunction):
 };
 }
 
-export const getProductsSoldTodayService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  try {
-    const response :any=  getProductsSoldToday();
-    res.status(200).json({ data:response });
-  } catch (err) {
-    next(err);
-};
-}
-
-export const getProductsSoldThisWeekService =async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  try {
-    const response :any= await getProductsSoldThisWeek();
-    res.status(200).json({ data:response });
-  } catch (err) {
-    next(err);
-};
-}
-
-export const getRevenueThisMonthService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  try {
-    const response :any= await  getRevenueThisMonth();
-    res.status(200).json({ data:response });
-  } catch (err) {
-    next(err);
-};
-};
-
-export const getWeeklySalesDataService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  try {
-    const response :any= await getWeeklySalesData();
-    res.status(200).json({ data:response });
-  } catch (err) {
-    next(err);
-};
-};
-
-export const getSalesByCategoryService = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  try {
-    const response :any= await getSalesByCategory();
-    res.status(200).json({ data:response });
-  } catch (err) {
-    next(err);
-};
-};
-
 export const deleteProduct = async(req:Request,res:Response,next:NextFunction):Promise<any> => {
   try {
     
@@ -287,24 +242,25 @@ export const updateProduct = async (req: any, res: Response, next: NextFunction)
   }
 };
 
-export const search = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  try {
-    const product:any = await searchProducts(req.body.key);
-    res.status(200).json({ data:product });
-  } catch (err) {
-    next(err);
-};
-}
-
 export const getFilteredProduct = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   try {
-    const page :number = parseInt(req.body.page);
-    const product:any = await getPaginatedProducts(page);
-    res.status(200).json({ data:product });
+    const page: number = parseInt(req.query.page as string) || 1;
+    const keyword: string = req.query.keyword?.toString() || "";
+
+    const productData = await getFilteredProductFromDB(page, keyword);
+    res.status(200).json({ data: productData });
   } catch (err) {
-    next(err);
+    if (err instanceof Error) {
+      // Type-safe access to message
+      console.error("Error:", err.message);
+      res.status(500).json({ error: err.message });
+    } else {
+      // Fallback for unknown types
+      res.status(500).json({ error: "An unknown error occurred." });
+    }
+  }
 };
-}
+
 
 export const fetchProductById = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
   

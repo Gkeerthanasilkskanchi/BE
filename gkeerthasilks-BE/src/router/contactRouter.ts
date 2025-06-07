@@ -1,6 +1,6 @@
 import express from "express";
 import { registerUser, loginUser, getUser } from "../service/authService";
-import { addOrder, addToCartService, createProduct, deleteProduct, fetchProductById, fetchProducts, getCart, getFilteredProduct, getLikedProducts, getProductsSoldThisWeekService, getProductsSoldTodayService, getRevenueThisMonthService, getSalesByCategoryService, getWeeklySalesDataService, likeProductService, search, sendQuery, updateProduct } from "../service/productService";
+import { addOrder, addToCartService, createProduct, deleteProduct, fetchProductById, fetchProducts, getCart, getFilteredProduct, getLikedProducts, likeProductService, sendQuery, updateProduct } from "../service/productService";
 import { createOrder, editProduct } from "../repository/contactRepo";
 import { upload } from "./middleware";
 
@@ -24,20 +24,8 @@ router.post('/send-subscribtion',sendQuery)
 router.get('/get-user-list',getUser);
 router.post("/create-order", addOrder);
 
-router.get("/getProductsSoldTodayService", getProductsSoldTodayService);
-
-
-router.get('/getProductsSoldThisWeekService',getProductsSoldThisWeekService)
-
-router.get('/getRevenueThisMonthService',getRevenueThisMonthService)
-router.get('/getWeeklySalesDataService',getWeeklySalesDataService)
-router.get('/getSalesByCategoryService',getSalesByCategoryService);
-
-
-
 router.get('/deleteProduct/:id',deleteProduct);
 router.get('/getProductById/:id',fetchProductById);
 router.post('/editProduct',upload.single('image'),updateProduct);
-router.post('/search',search);
-router.post('/getFilteredProduct',getFilteredProduct);
+router.get('/getFilteredProduct', getFilteredProduct);
 export { router as userRoutes };

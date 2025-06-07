@@ -178,7 +178,7 @@ export const getLikedProductsByUser = (userId: number): any[] => {
   const likedStmt = db.prepare(`
     SELECT p.* FROM products p
     JOIN liked_products l ON p.id = l.productId
-    WHERE l.userId = ?
+    WHERE l.userId = ? AND p.is_active=1
   `);
   const likedProducts = likedStmt.all(userId);
 
@@ -223,13 +223,13 @@ export const getCartByUser = (userId: number): any[] => {
   const cartStmt = db.prepare(`
     SELECT p.*, c.quantity FROM products p
     JOIN cart_products c ON p.id = c.productId
-    WHERE c.userId = ?
+    WHERE c.userId = ? AND p.is_active=1
   `);
   const cartProducts = cartStmt.all(userId);
 
   // Also fetch liked product IDs to set `is_product_liked`
   const likedProductIds = new Set(
-    db.prepare(`SELECT productId FROM liked_products WHERE userId = ?`).all(userId).map((p: any) => p.productId)
+    db.prepare(`SELECT productId FROM liked_products WHERE userId = ? `).all(userId).map((p: any) => p.productId)
   );
 
   return cartProducts.map((product: any) => ({
@@ -259,60 +259,6 @@ export const createOrder = (
   stmt.run(userId, productId, quantity, price);
 };
 
-
-export const getProductsSoldToday = (): number => {
-  const stmt = db.prepare(`
-    SELECT SUM(quantity) as total FROM orders 
-    WHERE DATE(createdAt) = DATE('now')
-  `);
-  const result = stmt.get() as { total: number | null };
-  return result.total ?? 0;
-};
-
-export const getProductsSoldThisWeek = (): number => {
-  const stmt = db.prepare(`
-    SELECT SUM(quantity) as total FROM orders 
-    WHERE strftime('%W', createdAt) = strftime('%W', 'now')
-  `);
-  const result = stmt.get() as { total: number | null };
-  return result.total ?? 0;
-};
-
-
-export const getRevenueThisMonth = (): number => {
-  const stmt = db.prepare(`
-    SELECT SUM(quantity * price) as total FROM orders 
-    WHERE strftime('%m', createdAt) = strftime('%m', 'now')
-  `);
-  const result = stmt.get() as { total: number | null };
-  return result.total ?? 0;
-};
-
-export const getWeeklySalesData = (): { name: string; sales: number }[] => {
-  const stmt = db.prepare(`
-    SELECT strftime('%w', createdAt) as weekday, SUM(quantity) as sales
-    FROM orders
-    WHERE strftime('%W', createdAt) = strftime('%W', 'now')
-    GROUP BY weekday
-  `);
-  const raw = stmt.all() as { weekday: string; sales: number }[];
-  const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return weekdays.map((day, index) => {
-    const entry = raw.find((r) => Number(r.weekday) === index);
-    return { name: day, sales: entry?.sales ?? 0 };
-  });
-};
-
-export const getSalesByCategory = (): { name: string; value: number }[] => {
-  const stmt = db.prepare(`
-    SELECT p.category, SUM(o.quantity) as value
-    FROM orders o
-    JOIN products p ON o.productId = p.id
-    GROUP BY p.category
-  `);
-  const rows = stmt.all() as { category: string; value: number }[];
-  return rows.map(row => ({ name: row.category, value: row.value }));
-};
 
 export const editProduct = (
   id: number,
@@ -359,43 +305,58 @@ export const editProduct = (
   );
 };
 
-export const searchProducts = (keyword: string): any[] => {
-  const searchTerm = `%${keyword}%`;
+export const getFilteredProductFromDB = (
+  page: number,
+  keyword: any = "",
+  pageSize: number = 10
+): { products: any[]; total: number } => {
+  // Make sure keyword is a string
+  const safeKeyword :any= typeof keyword === "string" ? keyword : "";
 
-  const stmt = db.prepare(`
-    SELECT * FROM products
-    WHERE
-      title LIKE ? OR
-      category LIKE ? OR
-      saree_type LIKE ?
-    AND is_active = 1
-  `);
+  const offset :any= (page - 1) * pageSize;
 
-  return stmt.all(searchTerm, searchTerm, searchTerm);
+  if (safeKeyword.trim()) {
+    const searchTerm = `%${safeKeyword}%`;
+
+    const stmt = db.prepare(`
+      SELECT * FROM products
+      WHERE is_active = 1 AND (
+        title LIKE ? OR
+        category LIKE ? OR
+        saree_type LIKE ?
+      )
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `);
+    const countStmt :any= db.prepare(`
+      SELECT COUNT(*) as total FROM products
+      WHERE is_active = 1 AND (
+        title LIKE ? OR
+        category LIKE ? OR
+        saree_type LIKE ?
+      )
+    `);
+
+    const products = stmt.all(searchTerm, searchTerm, searchTerm, pageSize, offset);
+    const total = countStmt.get(searchTerm, searchTerm, searchTerm).total;
+
+    return { products, total };
+  } else {
+    const countStmt :any= db.prepare(`SELECT COUNT(*) as total FROM products WHERE is_active = 1`);
+    const total = countStmt.get().total;
+
+    const stmt = db.prepare(`
+      SELECT * FROM products
+      WHERE is_active = 1
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `);
+    const products = stmt.all(pageSize, offset);
+
+    return { products, total };
+  }
 };
-export const getPaginatedProducts = (page: any, pageSize: number = 10): { products: any[], total: number } => {
-  const offset = (page - 1) * pageSize;
 
-  // Get total count of active products
-  const countStmt = db.prepare(`SELECT COUNT(*) as total FROM products WHERE is_active = 1`);
-  const countResult = countStmt.get() as { total: number };
-  const total = countResult.total;
-
-  // Get paginated products
-  const stmt = db.prepare(`
-    SELECT * FROM products
-    WHERE is_active = 1
-    ORDER BY created_at DESC
-    LIMIT ? OFFSET ?
-  `);
-  const products = stmt.all(pageSize, offset);
-
-
-  return {
-    products,
-    total
-  };
-};
 
 export const getProductById = (id: number): any | null => {
   const stmt = db.prepare(`
@@ -410,7 +371,7 @@ export const getAllProductsWithFlags = (user: any) => {
   let likedIds: any = null;
   let cartIds: any = null;
 
-  const productStmt = db.prepare('SELECT * FROM products');
+  const productStmt = db.prepare('SELECT * FROM products WHERE is_active=1');
   const products = productStmt.all();
   if (user != null) {
   
