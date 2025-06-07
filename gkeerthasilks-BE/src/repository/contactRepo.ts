@@ -143,19 +143,24 @@ export const getAllProducts = (): any[] => {
 };
 
 
-export const likeProduct = (userId: number, productId: number): void => {
+export const likeProduct = (userId: number, productId: number): { message: string } => {
   const exists = db
     .prepare(`SELECT 1 FROM liked_products WHERE userId = ? AND productId = ?`)
     .get(userId, productId);
 
   if (!exists) {
     db.prepare(`INSERT INTO liked_products (userId, productId) VALUES (?, ?)`).run(userId, productId);
-    console.log(`User ${userId} liked product ${productId}`);
+    return {
+      message: `Product Liked Successfully`
+    };
   } else {
     db.prepare(`DELETE FROM liked_products WHERE userId = ? AND productId = ?`).run(userId, productId);
-    console.log(`User ${userId} unliked product ${productId}`);
+    return {
+      message: `Product Unliked Successfully`
+    };
   }
 };
+
 
 export const updateProductStatus = (
   productId: number,
@@ -196,7 +201,7 @@ export const getLikedProductsByUser = (userId: number): any[] => {
 
 
 // Add product to cart
-export const addToCart = (userId: number, productId: number, quantity: number): void => {
+export const addToCart = (userId: number, productId: number, quantity: number): {message:string} => {
   const exists = db
     .prepare(`SELECT 1 FROM cart_products WHERE userId = ? AND productId = ?`)
     .get(userId, productId);
@@ -207,15 +212,19 @@ export const addToCart = (userId: number, productId: number, quantity: number): 
       INSERT INTO cart_products (userId, productId, quantity)
       VALUES (?, ?, ?)
     `).run(userId, productId, quantity);
-
-    console.log(`Added product ${productId} to cart for user ${userId}`);
+ return {
+      message: `Product Added Successfully`
+    };
+   
   } else {
     // Remove from cart
     db.prepare(`
       DELETE FROM cart_products WHERE userId = ? AND productId = ?
     `).run(userId, productId);
 
-    console.log(`Removed product ${productId} from cart for user ${userId}`);
+     return {
+      message: `Product removed Successfully`
+    };
   }
 };
 
